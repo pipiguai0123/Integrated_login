@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}管理面板 - 集成系统管理平台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>管理员控制面板</h2>
+        <hr>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">用户管理</h5>
+                <p class="card-text">管理系统用户，包括添加、编辑和删除用户。</p>
+                <a href="{{ url_for('admin.users') }}" class="btn btn-primary">进入用户管理</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">项目管理</h5>
+                <p class="card-text">管理系统项目，包括添加、编辑和删除项目。</p>
+                <a href="{{ url_for('admin.projects') }}" class="btn btn-primary">进入项目管理</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">平台管理</h5>
+                <p class="card-text">管理系统平台，包括添加、编辑和删除平台。</p>
+                <a href="{{ url_for('admin.platforms') }}" class="btn btn-primary">进入平台管理</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

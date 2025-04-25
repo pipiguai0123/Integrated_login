@@ -1,0 +1,59 @@
+/* 全局样式 */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.footer {
+    margin-top: auto;
+    width: 100%;
+    position: sticky;
+    bottom: 0;
+    padding: 15px 0;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e7e7e7;
+}
+
+/* 导航栏样式 */
+.navbar-brand {
+    font-weight: bold;
+}
+
+/* 卡片样式 */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* 表格样式 */
+.table th {
+    background-color: #f8f9fa;
+}
+
+/* 按钮样式 */
+.btn {
+    border-radius: 0.25rem;
+}
+
+/* 平台卡片样式 */
+.platform-card {
+    height: 100%;
+}
+
+/* 登录页面样式 */
+.login-container {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow-x: auto;
+    }
+}
