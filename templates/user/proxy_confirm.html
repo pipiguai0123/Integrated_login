@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}访问平台 - {{ platform.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">访问平台: {{ platform.name }}</h4>
+            </div>
+            <div class="card-body">
+                <p>您正在尝试访问平台: <strong>{{ platform.name }}</strong></p>
+                <p>平台地址: <code>{{ platform.url }}</code></p>
+                <p>平台描述: {{ platform.description }}</p>
+
+                {% if platform.has_login_info() %}
+                <div class="alert alert-warning">
+                    <h5><i class="fas fa-key"></i> 平台登录信息</h5>
+                    {% if platform.project_username %}
+                    <div class="mb-2">
+                        <strong>项目账号:</strong>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">用户名</span>
+                                    <input type="text" class="form-control" value="{{ platform.project_username }}" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this.previousElementSibling.value)">复制</button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">密码</span>
+                                    <input type="text" class="form-control" value="{{ platform.project_password }}" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this.previousElementSibling.value)">复制</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if platform.admin_username %}
+                    <div>
+                        <strong>超管账号:</strong>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">用户名</span>
+                                    <input type="text" class="form-control" value="{{ platform.admin_username }}" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this.previousElementSibling.value)">复制</button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">密码</span>
+                                    <input type="text" class="form-control" value="{{ platform.admin_password }}" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this.previousElementSibling.value)">复制</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="alert alert-info">
+                    <h5>请选择访问方式:</h5>
+                    <p><i class="fas fa-info-circle"></i> 您可以选择通过服务器代理访问或直接访问该平台。</p>
+                    <p class="mb-0"><strong>注意:</strong> 如果目标平台仅对服务器可见，请选择"通过代理访问"。如果目标平台对您的浏览器可见，建议选择"直接访问"以获得更好的体验。</p>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">通过服务器代理访问</h5>
+                                <p class="card-text">所有请求将通过服务器转发，适用于内部平台或需要服务器权限的平台。</p>
+                                <p class="card-text text-muted small">优点: 可以访问内部网络资源，保持会话状态</p>
+                                <p class="card-text text-muted small">缺点: 可能速度较慢，不支持某些复杂功能</p>
+                                <p class="card-text text-muted small"><strong>新功能:</strong> 我们已经改进了代理功能，现在可以直接显示目标网站内容，而不是使用iframe</p>
+                                <p class="card-text text-muted small">系统会在页面顶部添加一个工具栏，方便您返回平台列表或直接访问目标网站</p>
+                                <a href="{{ url_for('user.proxy_platform', platform_id=platform.id) }}" class="btn btn-primary" target="_blank">通过代理访问</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">直接访问</h5>
+                                <p class="card-text">直接从您的浏览器访问目标平台，适用于公共可访问的平台。</p>
+                                <p class="card-text text-muted small">优点: 速度快，支持所有功能</p>
+                                <p class="card-text text-muted small">缺点: 无法访问内部网络资源</p>
+                                <a href="{{ url_for('user.direct_to_platform', platform_id=platform.id) }}" class="btn btn-secondary" target="_blank">直接访问</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">返回平台列表</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 复制到剪贴板函数
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            // 创建一个临时提示
+            const toast = document.createElement('div');
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.backgroundColor = '#28a745';
+            toast.style.color = 'white';
+            toast.style.padding = '10px 20px';
+            toast.style.borderRadius = '5px';
+            toast.style.zIndex = '9999';
+            toast.textContent = '已复制到剪贴板';
+            document.body.appendChild(toast);
+
+            // 2秒后移除提示
+            setTimeout(function() {
+                document.body.removeChild(toast);
+            }, 2000);
+        }).catch(function(err) {
+            console.error('无法复制文本: ', err);
+            alert('复制失败，请手动复制');
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('代理确认页面已加载');
+    });
+</script>
+{% endblock %}

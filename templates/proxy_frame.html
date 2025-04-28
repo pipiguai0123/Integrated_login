@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}代理访问 - {{ platform.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>代理访问: {{ platform.name }}</h2>
+                <div>
+                    <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary me-2">返回平台列表</a>
+                    <a href="{{ original_url }}" target="_blank" class="btn btn-success">直接访问</a>
+                </div>
+            </div>
+            <p class="text-muted">
+                外网地址: {{ platform.url }}
+                {% if platform.internal_url %}
+                <br>内网地址: {{ platform.internal_url }}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-body p-0">
+                    <iframe src="{{ proxy_url }}" style="width: 100%; height: 80vh; border: none;" id="proxyFrame"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 调整iframe高度以适应内容
+    window.addEventListener('load', function() {
+        const iframe = document.getElementById('proxyFrame');
+        iframe.onload = function() {
+            try {
+                // 尝试调整高度
+                const height = Math.max(
+                    document.documentElement.clientHeight - 200,
+                    iframe.contentWindow.document.body.scrollHeight
+                );
+                iframe.style.height = height + 'px';
+            } catch (e) {
+                console.log('无法调整iframe高度:', e);
+            }
+        };
+    });
+</script>
+{% endblock %}
