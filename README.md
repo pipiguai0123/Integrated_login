@@ -12,8 +12,9 @@
 - 项目-平台关联管理
 
 ### 普通用户功能
-- 查看可访问的平台列表
-- 跳转到相应平台
+- 查看可访问的平台列表（按权重排序）
+- 直接跳转到相应平台（优先使用内网URL）
+- 查看平台登录账号和密码信息
 
 ## 技术栈
 
@@ -22,6 +23,7 @@
 - **ORM**：SQLAlchemy
 - **认证**：Flask-Login
 - **前端**：Bootstrap 5
+- **HTTP客户端**：Requests（用于服务器代理功能）
 
 ## 系统架构
 
@@ -48,8 +50,14 @@
 3. **platforms表** - 存储平台信息
    - id (主键)
    - name (平台名称)
-   - url (平台URL)
+   - url (外网URL，可选)
+   - internal_url (内网URL，可选)
    - description (平台描述)
+   - project_username (项目账号用户名)
+   - project_password (项目账号密码)
+   - admin_username (超管账号用户名)
+   - admin_password (超管账号密码)
+   - weight (排序权重，数值越大越靠前)
    - created_at (创建时间)
 
 4. **user_projects表** - 用户与项目的关联表
@@ -85,8 +93,9 @@
    - 在`config.py`中配置数据库连接信息
 
 4. **初始化数据库**
-   - 系统首次启动时会自动创建所需的表
-   - 同时会创建默认管理员账户（用户名：admin，密码：admin123）
+   - 方法一：系统首次启动时会自动创建所需的表和默认管理员账户
+   - 方法二：运行初始化脚本 `python init_db.py`（推荐，会删除现有表并重新创建）
+   - 默认管理员账户：用户名 `admin`，密码 `admin123`
 
 5. **启动应用**
    ```
@@ -107,7 +116,10 @@
 2. **添加平台**
    - 在管理员面板中点击"平台管理"
    - 点击"添加平台"按钮
-   - 填写平台名称、URL和描述
+   - 填写平台名称、外网URL（可选）、内网URL（可选）和描述
+   - 至少需要填写外网URL或内网URL中的一个
+   - 可以设置排序权重（数值越大，在平台列表中排序越靠前）
+   - 可以配置项目账号和超管账号的用户名和密码
    - 点击"添加平台"按钮保存
 
 3. **添加项目**
@@ -136,7 +148,10 @@
 
 3. **访问平台**
    - 点击平台卡片上的"访问平台"按钮
-   - 系统会自动跳转到相应平台的URL
+   - 系统会自动跳转到平台（优先使用内网URL）
+   - 如果平台配置了登录账号和密码，可以在平台卡片上查看
+   - 密码默认隐藏，点击眼睛图标可以显示密码
+   - 点击复制按钮可以复制账号密码
 
 ## 项目结构
 
@@ -185,16 +200,16 @@ import os
 class Config:
     # 密钥配置
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-for-integrated-management-system'
-    
+
     # 数据库配置
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:123456@192.168.18.145:3306/app'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = True  # 打印SQL语句，方便调试
-    
+
     # 会话配置
     SESSION_TYPE = 'filesystem'
     PERMANENT_SESSION_LIFETIME = 3600  # 会话有效期（秒）
-    
+
     # 调试配置
     DEBUG = True
 ```
@@ -223,29 +238,29 @@ project_platforms = db.Table('project_platforms',
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # 用户所属的项目（多对多关系）
-    projects = db.relationship('Project', secondary=user_projects, 
-                              backref=db.backref('users', lazy='dynamic'), 
+    projects = db.relationship('Project', secondary=user_projects,
+                              backref=db.backref('users', lazy='dynamic'),
                               lazy='dynamic')
-    
+
     @property
     def password(self):
         raise AttributeError('password is not a readable attribute')
-    
+
     @password.setter
     def password(self, password):
         self.password_hash = generate_password_hash(password)
-    
+
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
+
     def get_accessible_platforms(self):
         """获取用户可访问的所有平台"""
         platforms = []
@@ -253,35 +268,35 @@ class User(UserMixin, db.Model):
             platforms.extend([p for p in project.platforms])
         # 去重
         return list(set(platforms))
-    
+
     def __repr__(self):
         return f'<User {self.username}>'
 
 class Project(db.Model):
     __tablename__ = 'projects'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # 项目关联的平台（多对多关系）
-    platforms = db.relationship('Platform', secondary=project_platforms, 
-                               backref=db.backref('projects', lazy='dynamic'), 
+    platforms = db.relationship('Platform', secondary=project_platforms,
+                               backref=db.backref('projects', lazy='dynamic'),
                                lazy='dynamic')
-    
+
     def __repr__(self):
         return f'<Project {self.name}>'
 
 class Platform(db.Model):
     __tablename__ = 'platforms'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
     url = db.Column(db.String(256))
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def __repr__(self):
         return f'<Platform {self.name}>'
 ```
@@ -303,56 +318,56 @@ from datetime import datetime
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
-    
+
     # 配置日志
     logging.basicConfig(level=logging.INFO)
-    
+
     # 初始化扩展
     db.init_app(app)
-    
+
     # 设置登录管理器
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.login_message = '请先登录'
     login_manager.login_message_category = 'info'
     login_manager.init_app(app)
-    
+
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
-    
+
     # 注册蓝图
     app.register_blueprint(auth)
     app.register_blueprint(admin)
     app.register_blueprint(user)
-    
+
     # 添加上下文处理器，提供当前年份
     @app.context_processor
     def inject_now():
         return {'now': datetime.now()}
-    
+
     # 根路由重定向到登录页面
     @app.route('/')
     def index():
         return redirect(url_for('auth.login'))
-    
+
     # 错误处理
     @app.errorhandler(404)
     def page_not_found(e):
         app.logger.error(f'404错误: {e}')
         return render_template('error.html', error='404 页面未找到'), 404
-    
+
     @app.errorhandler(500)
     def internal_server_error(e):
         app.logger.error(f'500错误: {e}')
         return render_template('error.html', error='500 服务器内部错误'), 500
-    
+
     # 创建数据库表
     with app.app_context():
         try:
             db.create_all()
             app.logger.info('数据库表创建成功')
-            
+
             # 检查是否存在管理员账户，如果不存在则创建一个默认管理员
             if not User.query.filter_by(is_admin=True).first():
                 admin_user = User(username='admin', is_admin=True)
@@ -364,7 +379,7 @@ def create_app(config_class=Config):
         except Exception as e:
             app.logger.error(f'数据库初始化错误: {e}')
             print(f'数据库初始化错误: {e}')
-    
+
     return app
 
 if __name__ == '__main__':
@@ -390,21 +405,21 @@ def login():
             return redirect(url_for('admin.dashboard'))
         else:
             return redirect(url_for('user.dashboard'))
-    
+
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        
+
         user = User.query.filter_by(username=username).first()
-        
+
         # 验证用户名和密码
         if user is None or not user.verify_password(password):
             flash('用户名或密码错误', 'danger')
             return render_template('login.html')
-        
+
         # 登录用户
         login_user(user)
-        
+
         # 获取next参数，即登录后要重定向的页面
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
@@ -412,9 +427,9 @@ def login():
                 next_page = url_for('admin.dashboard')
             else:
                 next_page = url_for('user.dashboard')
-        
+
         return redirect(next_page)
-    
+
     return render_template('login.html')
 
 @auth.route('/logout')
@@ -495,15 +510,90 @@ def dashboard():
 def redirect_to_platform(platform_id):
     # 获取平台信息
     platform = Platform.query.get_or_404(platform_id)
-    
+
     # 检查用户是否有权限访问该平台
     accessible_platforms = current_user.get_accessible_platforms()
     if platform not in accessible_platforms:
         abort(403)  # 权限不足，返回403错误
-    
+
     # 重定向到平台URL
     return redirect(platform.url)
 ```
+
+## 服务器代理功能
+
+系统提供了两种代理功能，允许用户通过服务器访问平台，而不是直接从浏览器访问：
+
+1. **Flask代理**：适用于大多数简单网站
+2. **Nginx反向代理**：适用于复杂的现代Web应用（如Angular应用）
+
+这对于以下场景特别有用：
+
+1. **访问内部网络资源**：当目标平台位于内部网络或仅对服务器可见时
+2. **权限控制**：当目标平台需要特定的服务器IP或权限时
+3. **数据过滤**：服务器可以对请求和响应进行过滤或修改
+4. **审计和日志**：记录用户的访问行为
+
+### Flask代理工作原理
+
+1. 用户点击"访问平台"按钮
+2. 系统显示访问方式选择页面
+3. 用户选择"通过代理访问"
+4. 服务器向目标平台发送请求
+5. 服务器接收目标平台的响应
+6. 服务器修改响应内容，将所有链接转换为代理链接
+7. 服务器添加一个工具栏到页面顶部
+8. 服务器将修改后的内容返回给用户
+
+### Nginx反向代理工作原理
+
+对于复杂的现代Web应用（如Angular应用），系统使用Nginx反向代理：
+
+1. 用户点击"访问平台"按钮
+2. 系统显示访问方式选择页面
+3. 用户选择"通过代理访问"
+4. 系统检测到是复杂应用（如Harbor）
+5. 系统返回一个iframe页面，嵌入Nginx代理的内容
+6. Nginx将请求转发到目标平台
+7. Nginx接收目标平台的响应并返回给iframe
+8. 用户在iframe中看到完整的应用功能
+
+这种方法结合了Flask代理和Nginx反向代理的优点：
+
+1. 保持用户在系统内部，不会离开您的网站
+2. 通过服务器访问内部网络资源
+3. 记录用户的访问行为
+4. 支持复杂的现代Web应用
+5. 提供更好的用户体验
+
+### 代理限制
+
+1. 不支持WebSocket等实时通信协议
+2. 某些依赖客户端IP的功能可能无法正常工作
+3. 性能可能比直接访问慢
+4. 目标服务器可能拒绝连接请求
+5. 某些JavaScript功能可能无法正常工作，特别是依赖于原始域的功能
+6. 某些复杂的网站可能需要特殊处理
+
+### 错误处理
+
+系统提供了友好的错误处理机制，当通过代理访问目标平台时可能遇到以下错误：
+
+1. **连接被拒绝**：当目标服务器拒绝连接请求时，系统会显示错误信息，并提供可能的原因和建议操作
+2. **连接超时**：当目标服务器在预期时间内没有响应时，系统会显示超时错误
+3. **内容解析失败**：当系统无法解析目标平台的响应内容时，系统会显示相应的错误信息
+4. **HTTP错误**：当目标服务器返回4xx或5xx错误时，系统会显示相应的错误信息
+
+在遇到错误时，用户可以：
+- 查看详细的错误信息和建议操作
+- 返回平台列表
+- **尝试直接访问目标平台**（推荐）
+- 联系系统管理员
+
+**工具栏**：在代理访问模式下，系统会在页面顶部添加一个工具栏，包含以下功能：
+- 显示当前正在代理访问的平台名称和URL
+- 提供返回平台列表的按钮
+- 提供直接访问目标平台的按钮
 
 ## 安全注意事项
 
@@ -511,6 +601,7 @@ def redirect_to_platform(platform_id):
 2. 使用Flask-Login管理用户会话
 3. 所有敏感操作都有权限验证
 4. 防止未授权访问的路由保护
+5. 代理功能仅对授权用户可用，并且只能访问用户有权限的平台
 
 ## 常见问题解答
 

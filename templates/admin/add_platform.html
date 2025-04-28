@@ -16,14 +16,72 @@
                 <input type="text" class="form-control" id="name" name="name" required>
             </div>
             <div class="mb-3">
-                <label for="url" class="form-label">平台URL</label>
-                <input type="url" class="form-control" id="url" name="url" required>
-                <div class="form-text">请输入完整的URL，包括http://或https://</div>
+                <label for="url" class="form-label">平台URL（外网访问）</label>
+                <input type="url" class="form-control" id="url" name="url">
+                <div class="form-text">请输入完整的URL，包括http://或https://，用于直接访问（外网URL和内网URL至少填写一个）</div>
+            </div>
+            <div class="mb-3">
+                <label for="internal_url" class="form-label">内网URL（优先访问）</label>
+                <input type="url" class="form-control" id="internal_url" name="internal_url">
+                <div class="form-text">可选。如果平台有内网地址，请在此输入。系统将优先使用此地址访问平台。</div>
             </div>
             <div class="mb-3">
                 <label for="description" class="form-label">平台描述</label>
                 <textarea class="form-control" id="description" name="description" rows="3"></textarea>
             </div>
+            <div class="mb-3">
+                <label for="weight" class="form-label">排序权重</label>
+                <input type="number" class="form-control" id="weight" name="weight" value="0" min="0">
+                <div class="form-text">数值越大，在平台列表中排序越靠前（默认为0）</div>
+            </div>
+
+            <hr>
+            <h5 class="mb-3">平台登录信息</h5>
+
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">项目账号</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="project_username" class="form-label">用户名</label>
+                                <input type="text" class="form-control" id="project_username" name="project_username">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="project_password" class="form-label">密码</label>
+                                <input type="text" class="form-control" id="project_password" name="project_password">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">超管账号</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="admin_username" class="form-label">用户名</label>
+                                <input type="text" class="form-control" id="admin_username" name="admin_username">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="admin_password" class="form-label">密码</label>
+                                <input type="text" class="form-control" id="admin_password" name="admin_password">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="d-grid">
                 <button type="submit" class="btn btn-primary">添加平台</button>
             </div>

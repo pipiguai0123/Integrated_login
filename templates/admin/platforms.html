@@ -16,7 +16,10 @@
                     <tr>
                         <th>ID</th>
                         <th>平台名称</th>
-                        <th>URL</th>
+                        <th>权重</th>
+                        <th>外网URL</th>
+                        <th>内网URL（优先访问）</th>
+                        <th>登录信息</th>
                         <th>描述</th>
                         <th>创建时间</th>
                         <th>操作</th>
@@ -27,7 +30,21 @@
                     <tr>
                         <td>{{ platform.id }}</td>
                         <td>{{ platform.name }}</td>
+                        <td><span class="badge bg-info">{{ platform.weight }}</span></td>
                         <td><a href="{{ platform.url }}" target="_blank">{{ platform.url }}</a></td>
+                        <td>{% if platform.internal_url %}<span class="text-success">{{ platform.internal_url }}</span>{% else %}<span class="text-muted">未设置</span>{% endif %}</td>
+                        <td>
+                            {% if platform.project_username or platform.admin_username %}
+                                {% if platform.project_username %}
+                                <div><small><strong>项目账号:</strong> {{ platform.project_username }}</small></div>
+                                {% endif %}
+                                {% if platform.admin_username %}
+                                <div><small><strong>超管账号:</strong> {{ platform.admin_username }}</small></div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">未设置</span>
+                            {% endif %}
+                        </td>
                         <td>{{ platform.description }}</td>
                         <td>{{ platform.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                         <td>
@@ -39,7 +56,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="text-center">暂无平台</td>
+                        <td colspan="9" class="text-center">暂无平台</td>
                     </tr>
                     {% endfor %}
                 </tbody>
