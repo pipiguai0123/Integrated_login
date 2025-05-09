@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: integration-system-app
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - TZ=Asia/Shanghai
+      - DB_HOST=164.155.64.10
+      - DB_USER=root
+      - DB_PASSWORD=root123456789A
+      - DB_PORT=3306
+      - DB_NAME=app
+      - DEBUG=False
+    volumes:
+      - ./flask_session:/app/flask_session
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

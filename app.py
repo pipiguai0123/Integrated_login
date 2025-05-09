@@ -45,6 +45,17 @@ def create_app(config_class=Config):
     def index():
         return redirect(url_for('auth.login'))
 
+    # 健康检查端点
+    @app.route('/health')
+    def health():
+        try:
+            # 检查数据库连接
+            db.session.execute('SELECT 1')
+            return {'status': 'healthy'}, 200
+        except Exception as e:
+            app.logger.error(f'健康检查失败: {e}')
+            return {'status': 'unhealthy', 'error': str(e)}, 500
+
     # 错误处理
     @app.errorhandler(404)
     def page_not_found(e):

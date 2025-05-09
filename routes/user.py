@@ -151,8 +151,8 @@ def redirect_to_platform(platform_id):
     if platform not in accessible_platforms:
         abort(403)  # 权限不足，返回403错误
 
-    # 获取目标URL（优先使用内网URL）
-    target_url = platform.get_proxy_url()
+    # 获取目标URL（从外部浏览器访问时，优先使用外网URL）
+    target_url = platform.get_proxy_url(use_internal=False)
 
     # 记录访问日志
     logging.info(f"用户 {current_user.username} 访问平台 {platform.name} ({target_url})")
@@ -183,8 +183,8 @@ def proxy_platform(platform_id):
     print(f"用户 {current_user.username} 正在通过代理访问平台 {platform.name} ({platform.url})")
 
     # 获取目标URL和路径
-    # 使用内网URL进行代理访问，如果内网URL不存在，则使用外网URL
-    target_url = platform.get_proxy_url()
+    # 使用内网URL进行代理访问（服务器内部访问），如果内网URL不存在，则使用外网URL
+    target_url = platform.get_proxy_url(use_internal=True)
     path = request.args.get('path', '')
 
     # 保存原始查询参数，除了path

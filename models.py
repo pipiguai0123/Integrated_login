@@ -87,12 +87,28 @@ class Platform(db.Model):
     weight = db.Column(db.Integer, default=0)    # 权重，用于排序，数值越大越靠前
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def get_proxy_url(self):
-        """获取用于访问的URL，优先使用内网URL，如果内网URL不存在，则使用外网URL"""
-        if self.internal_url and self.internal_url.strip():
+    def get_proxy_url(self, use_internal=False):
+        """
+        获取用于访问的URL
+
+        参数:
+            use_internal (bool): 是否优先使用内网URL
+                - True: 优先使用内网URL（适用于服务器内部访问）
+                - False: 优先使用外网URL（适用于外部浏览器访问）
+        """
+        # 如果指定使用内网URL且内网URL存在
+        if use_internal and self.internal_url and self.internal_url.strip():
             return self.internal_url
+
+        # 如果外网URL存在，使用外网URL
         elif self.url and self.url.strip():
             return self.url
+
+        # 如果外网URL不存在但内网URL存在，使用内网URL（即使指定了不使用内网URL）
+        elif self.internal_url and self.internal_url.strip():
+            return self.internal_url
+
+        # 如果两者都不存在，返回空字符串
         else:
             return ""
 

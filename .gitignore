@@ -33,6 +33,14 @@ Thumbs.db
 # Flask会话文件
 flask_session/
 
+# Docker相关
+.dockerignore
+docker-compose.override.yml
+
+# 备份文件
+*.bak
+config.py.bak
+
 # 测试覆盖率报告
 htmlcov/
 .tox/

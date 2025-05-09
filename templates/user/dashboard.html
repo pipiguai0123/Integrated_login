@@ -21,6 +21,14 @@
     <div class="col-12">
         <h2>我的可访问平台</h2>
         <hr>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> 平台访问说明：
+            <ul class="mb-0">
+                <li>系统会自动选择合适的URL访问平台</li>
+                <li>如果平台配置了外网地址，将优先使用外网地址直接访问</li>
+                <li>如果平台只配置了内网地址，系统将通过服务器代理访问</li>
+            </ul>
+        </div>
     </div>
 </div>
 
@@ -31,6 +39,23 @@
             <div class="card-body">
                 <h5 class="card-title">{{ platform.name }}</h5>
                 <p class="card-text">{{ platform.description }}</p>
+
+                <div class="mt-2 mb-2">
+                    {% if platform.url %}
+                    <div class="small text-muted mb-1">
+                        <i class="fas fa-globe"></i> 外网地址: {{ platform.url }}
+                    </div>
+                    {% endif %}
+
+                    {% if platform.internal_url %}
+                    <div class="small text-muted">
+                        <i class="fas fa-network-wired"></i> 内网地址: {{ platform.internal_url }}
+                        {% if not platform.url %}
+                        <span class="badge bg-info ms-1" title="您的浏览器无法直接访问内网地址，系统将通过服务器代理访问">内网</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
 
                 {% if platform.has_login_info() %}
                 <div class="mt-3">
@@ -77,7 +102,14 @@
                 {% endif %}
             </div>
             <div class="card-footer">
-                <a href="{{ url_for('user.redirect_to_platform', platform_id=platform.id) }}" class="btn btn-primary" target="_blank">访问平台</a>
+                <a href="{{ url_for('user.redirect_to_platform', platform_id=platform.id) }}" class="btn btn-primary" target="_blank">
+                    访问平台
+                    {% if platform.url %}
+                    <span class="badge bg-light text-dark ms-1" title="将使用外网地址直接访问">外网</span>
+                    {% elif platform.internal_url %}
+                    <span class="badge bg-info ms-1" title="将使用内网地址通过服务器代理访问">内网</span>
+                    {% endif %}
+                </a>
             </div>
         </div>
     </div>
